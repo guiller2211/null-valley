@@ -12,4 +12,5 @@ export interface LuchadorData extends Resource {
 export type CommentsData = {
   comment?: string;
   like?: boolean;
+  image?: ImageData;
 }

@@ -1,6 +1,5 @@
-import "reshaped/themes/reshaped/theme.css";
 import { useState } from 'react';
-import { View, Reshaped, Container } from 'reshaped';
+import { View } from 'reshaped';
 import { Results } from './components/Results/Results';
 import { Votaciones } from './components/Votacion/Votacion';
 import { LuchadorData } from "./types/luchador";
@@ -13,7 +12,15 @@ export function App() {
   const [winners, setWinners] = useState<LuchadorData[]>([]);
   const [isLoading, setIsloading] = useState(false);
 
-  
+
+  const showResult = async (total: number) => {
+    if (total > 9) {
+      await getLuchadores()
+        .then(luchadores => determinarGanador(luchadores))
+        .catch(error => console.error("Error obteniendo luchadores:", error));
+    }
+  };
+
   const determinarGanador = (luchadores: LuchadorData[]) => {
     let maxScore = -Infinity;
     let currentWinners: LuchadorData[] = [];
@@ -53,28 +60,21 @@ export function App() {
     setIsloading(false);
   };
 
-  const showResult = async (total: number) => {
-    if (total >= 10) {
-      await getLuchadores()
-        .then(luchadores => determinarGanador(luchadores))
-        .catch(error => console.error("Error obteniendo luchadores:", error));
-    }
-  };
 
   return (
-    <Reshaped theme="reshaped">
-      <Container width="100%">
-        <View align='center'>
-          {!showResults ? (
-            <Votaciones total={showResult} luchadoresData={luchadores} />
-          ) : (
-            <Results 
-            winner={winners} 
-            onReset={resetEncuesta} 
-            isLoading={isLoading}/>
-          )}
+
+    <View align='center' padding={{ s: 12, l: 25 }}>
+      {!showResults ? (
+        <View direction='column' gap={10}>
+          <Votaciones total={showResult} luchadoresData={luchadores} />
         </View>
-      </Container>
-    </Reshaped>
+      ) : (
+        <Results
+          winner={winners}
+          onReset={resetEncuesta}
+          isLoading={isLoading} />
+      )}
+    </View>
+
   );
 }

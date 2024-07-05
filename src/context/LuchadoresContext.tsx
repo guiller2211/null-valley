@@ -22,22 +22,51 @@ export const LuchadorProvider = (props: LuchadorProviderProps) => {
     const luchadorValue: Context = {
       ...state,
       actions,
-      getLuchadores: async () =>{
+      getLuchadores: async () => {
         const luchadoresSnapshot = await getDocs(collection(db, "luchador"));
         const luchadoresData: LuchadorData[] = await Promise.all(luchadoresSnapshot.docs.map(async (doc) => {
           const data = doc.data() as LuchadorData;
           const imageUrl = await getDownloadURL(ref(storage, data.image.fullPath));
-      
+          
+          const updatedVotes = data.votes!.map(vote => ({
+            ...vote,
+            image: {
+              ...vote.image,
+              fullPath: imageUrl
+            }
+          }));
+
           return {
             ...data,
             id: doc.id,
             image: {
               ...data.image,
               fullPath: imageUrl
-            }
+            },
+            votes: updatedVotes
           };
         }))
         return luchadoresData;
+      },
+      getCommets: async () => {
+        const commentsSnapshot = await getDocs(collection(db, "luchador"));
+        const commentsData = await Promise.all(commentsSnapshot.docs.map(async (doc) => {
+          const data = doc.data() as LuchadorData;
+          const imageUrl = await getDownloadURL(ref(storage, data.image.fullPath));
+
+          const comments = data.votes || [];
+
+          return comments.map(comment => ({
+            ...comment,
+            image: {
+              ...data.image,
+              fullPath: imageUrl
+            }
+          }));
+        }));
+
+        const allComments = commentsData.flat() as CommentsData[];
+        return allComments;
       },
       addComment: async (luchadorId: string, voto: CommentsData) => {
         try {

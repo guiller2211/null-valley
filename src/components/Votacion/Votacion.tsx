@@ -1,5 +1,18 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { Card, Text, View, Image, RadioGroup, Radio, Icon, TextArea, Tooltip, Button, Loader, FormControl } from 'reshaped';
+import {
+    Text,
+    View,
+    Image,
+    RadioGroup,
+    Radio,
+    Icon,
+    TextArea,
+    Tooltip,
+    Button,
+    Loader,
+    FormControl,
+    Actionable
+} from 'reshaped';
 import { CommentsData, LuchadorData } from '../../types/luchador';
 import { IconLike } from '../../icon/IconLike';
 import { IconDisLike } from '../../icon/IconDisLike';
@@ -10,8 +23,9 @@ import { useLuchador } from '../../context/LuchadoresContext';
 
 export const Votaciones = (props: VotacionesProps) => {
     const { total, luchadoresData } = props;
-    const { addComment, getLuchadores } = useLuchador();
+    const { addComment, getLuchadores, getCommets } = useLuchador();
     const [luchadores, setLuchadores] = useState<LuchadorData[]>(luchadoresData);
+    const [comments, setComments] = useState<CommentsData[]>([]);
     const [activeLuchador, setActiveLuchador] = useState<string | null>(null);
     const [like, setLike] = useState('');
     const [uidLuchador, setUidLuchador] = useState('');
@@ -19,6 +33,7 @@ export const Votaciones = (props: VotacionesProps) => {
     const [votesCount, setVotesCount] = useState(0)
     const [isLoading, setIsloading] = useState(false);
     const [isLoadingLuchadores, setIsloadingLuchadores] = useState(false);
+    const [isLoadingComments, setIsloadingComments] = useState(false);
     const [likeHasError, setLikeHasError] = useState(false);
     const [commentHasError, setCommentHasError] = useState(false);
 
@@ -28,10 +43,11 @@ export const Votaciones = (props: VotacionesProps) => {
             try {
                 const fetchedLuchadores = await getLuchadores();
                 setLuchadores(fetchedLuchadores);
-
+                const fetchedComments = await getCommets();
+                setComments(fetchedComments);
             } catch (error) {
                 console.error("Error obteniendo luchadores:", error);
-            }finally{
+            } finally {
                 setIsloadingLuchadores(false)
             }
         };
@@ -48,7 +64,7 @@ export const Votaciones = (props: VotacionesProps) => {
             setCommentHasError(true);
         } else {
             setIsloading(true);
-
+            setIsloadingComments(true);
             const voto: CommentsData = {
                 comment: comment,
                 like: like === 'true'
@@ -56,11 +72,12 @@ export const Votaciones = (props: VotacionesProps) => {
 
             try {
                 await addComment(uidLuchador, voto);
-                await updateLuchadores();
+                await updateComments();
             } catch (error) {
                 console.error('Error:', error);
             } finally {
                 setIsloading(false);
+                setIsloadingComments(false);
                 setLikeHasError(false);
                 setCommentHasError(false);
                 setActiveLuchador(null);
@@ -68,17 +85,16 @@ export const Votaciones = (props: VotacionesProps) => {
         }
     };
 
-    const updateLuchadores = async () => {
+    const updateComments = async () => {
         try {
-            const updatedLuchadores = await getLuchadores();
+            const updatedComments = await getCommets();
             let totalVotes = 0;
 
-            updatedLuchadores.forEach(luchador => {
-                totalVotes += luchador.votes!.length;
-            });
+            totalVotes += updatedComments.length;
+
             setVotesCount(totalVotes)
             totalVotes >= 10 && total && total(totalVotes);
-            setLuchadores(updatedLuchadores);
+            setComments(updatedComments);
         } catch (error) {
             console.error("Error updating luchadores after vote:", error);
         }
@@ -97,6 +113,7 @@ export const Votaciones = (props: VotacionesProps) => {
         let newValue = value;
         if (newValue.length > 120) {
             newValue = newValue.slice(0, 120);
+            return;
         }
 
         const textoOfuscado = ofuscarPalabrasProhibidas(newValue);
@@ -105,95 +122,103 @@ export const Votaciones = (props: VotacionesProps) => {
     };
 
     return (
-        <View direction='column' gap={5}>
+        <View direction='column' gap={5} >
+
             <Text align='center' variant='featured-2' weight='bold'>Encuesta Null Valley</Text>
             {
-                isLoadingLuchadores 
-                ?
-                <Loader size='medium'/>
-                :
-                <>
-                 <form onSubmit={submitForm}>
-                <View direction='row' gap={5}>
-                    {luchadores.map((luchador) => {
-                        const luchadorName = luchador.name.replace(/\s+/g, '_');
+                isLoadingLuchadores
+                    ?
+                    <Loader size='medium' />
+                    :
+                    <>
 
-                        return (
-                            <View gap={5} key={luchador.id} borderColor={!activeLuchador || activeLuchador !== luchador.id ? 'neutral' : 'primary'} borderRadius='medium'>
-                                <Card onClick={() => handleActivateCard(luchador)} >
-                                    <View direction='column' gap={5} width={100}>
-                                        <View direction="row" gap={4} justify={{ s: 'center', l: 'start' }}>
-                                            <Image src={luchador.image.fullPath} />
-                                            <View direction="column" gap={4}>
-                                                <Text variant="featured-1" weight="bold">
-                                                    {luchador.name}
-                                                </Text>
-                                                <Text variant="featured-3">
-                                                    {luchador.description || "Default Description"}
-                                                </Text>
-                                            </View>
+                        <form onSubmit={submitForm}>
+                            <View direction='row' gap={5}>
+                                {luchadores.map((luchador) => {
+                                    const luchadorName = luchador.name.replace(/\s+/g, '_');
+
+                                    return (
+                                        <View gap={5} key={luchador.id} borderColor={!activeLuchador || activeLuchador !== luchador.id ? 'neutral' : 'primary'} borderRadius='medium'>
+                                            <Actionable onClick={() => handleActivateCard(luchador)} >
+                                                <View direction='column' gap={5} padding={5}>
+                                                    <View direction="row" gap={4} justify={{ s: 'center', l: 'start' }}>
+                                                        <Image src={luchador.image.fullPath} />
+                                                        <View direction="column" gap={4}>
+                                                            <Text variant="featured-1" weight="bold">
+                                                                {luchador.name}
+                                                            </Text>
+                                                            <Text variant="featured-3">
+                                                                {luchador.description || "Default Description"}
+                                                            </Text>
+                                                        </View>
+                                                    </View>
+                                                    {
+                                                        activeLuchador === luchador.id && isLoading
+                                                            ?
+                                                            <Loader />
+                                                            :
+                                                            <>
+                                                                {activeLuchador === luchador.id && (
+                                                                    <>
+                                                                        <FormControl hasError={likeHasError}>
+                                                                            <RadioGroup
+                                                                                name={luchadorName + "_like"}
+                                                                                onChange={({ value }) => setLike(value)}>
+                                                                                <View gap={10} direction='row' justify={'center'}>
+                                                                                    <Radio value="true"><Icon svg={IconLike} size={8} /></Radio>
+                                                                                    <Radio value="false"><Icon svg={IconDisLike} size={8} /></Radio>
+                                                                                </View>
+                                                                            </RadioGroup>
+                                                                            <FormControl.Error>Campo obligatorio</FormControl.Error>
+                                                                        </FormControl>
+
+                                                                        <FormControl hasError={commentHasError}>
+                                                                            <TextArea
+                                                                                name='comment'
+                                                                                placeholder="Máximo 120 caracteres"
+                                                                                value={comment}
+                                                                                onChange={(e) => handleCaracteres(e.value)}
+                                                                                inputAttributes={{
+                                                                                    tabIndex: 4,
+                                                                                }}
+                                                                            />
+                                                                            <FormControl.Error>Campo obligatorio</FormControl.Error>
+                                                                        </FormControl>
+                                                                    </>
+                                                                )}
+
+                                                                {activeLuchador === luchador.id && comment.length >= 120 && (
+                                                                    <Tooltip text="Maximo de caracteres permitido" position='bottom' active>
+                                                                        {(attributes) => <span {...attributes}>Maximo de caracteres permitido</span>}
+                                                                    </Tooltip>
+                                                                )}
+                                                            </>
+                                                    }
+                                                </View>
+                                            </Actionable>
                                         </View>
-                                        {
-                                            activeLuchador === luchador.id && isLoading
-                                                ?
-                                                <Loader />
-                                                :
-                                                <>
-                                                    {activeLuchador === luchador.id && (
-                                                        <>
-                                                            <FormControl hasError={likeHasError}>
-                                                                <RadioGroup
-                                                                    name={luchadorName + "_like"}
-                                                                    onChange={({ value }) => setLike(value)}
-                                                                    disabled={!activeLuchador || activeLuchador !== luchador.id}>
-                                                                    <View gap={10} direction='row' justify={'center'}>
-                                                                        <Radio value="true"><Icon svg={IconLike} size={8} /></Radio>
-                                                                        <Radio value="false"><Icon svg={IconDisLike} size={8} /></Radio>
-                                                                    </View>
-                                                                </RadioGroup>
-                                                                <FormControl.Error>Campo obligatorio</FormControl.Error>
-                                                            </FormControl>
-
-                                                            <FormControl hasError={commentHasError}>
-                                                                <TextArea
-                                                                    name={luchadorName + "_opinion"}
-                                                                    placeholder="Máximo 120 caracteres"
-                                                                    disabled={!activeLuchador || activeLuchador !== luchador.id}
-                                                                    value={comment}
-                                                                    onChange={(e) => handleCaracteres(e.value)}
-                                                                />
-                                                                <FormControl.Error>Campo obligatorio</FormControl.Error>
-                                                            </FormControl>
-
-                                                            <Comments comments={luchador.votes} />
-                                                        </>
-                                                    )}
-
-                                                    {activeLuchador === luchador.id && comment.length >= 120 && (
-                                                        <Tooltip text="Maximo de caracteres permitido" position='bottom' active>
-                                                            {(attributes) => <span {...attributes}>Maximo de caracteres permitido</span>}
-                                                        </Tooltip>
-                                                    )}
-                                                </>
-                                        }
-                                    </View>
-                                </Card>
+                                    )
+                                })}
                             </View>
-                        )
-                    })}
-                </View>
-                <View paddingTop={5}>
-                    <Button loading={isLoading} disabled={!activeLuchador} type='submit' size='xlarge' color='primary' fullWidth>Enviar Encuesta</Button>
-                </View>
-            </form>
-            {
-                votesCount === 9
-                &&
-                <Text variant='body-3' weight='bold'>Queda 1 voto para terminar</Text>
+                            <View paddingTop={5}>
+                                <Button loading={isLoading} disabled={!activeLuchador} type='submit' size='xlarge' color='primary' fullWidth>Enviar Encuesta</Button>
+                            </View>
+                        </form>
+                        {
+                            votesCount === 9
+                            &&
+                            <Text variant='body-3' weight='bold'>Queda 1 voto para terminar</Text>
+                        }
+                        {
+                            isLoadingComments ?
+                                <Loader />
+                                :
+                                <Comments comments={comments} />
+                        }
+
+                    </>
             }
-                </>
-            }
-           
+
         </View>
     );
 };

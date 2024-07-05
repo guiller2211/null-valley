@@ -7,13 +7,11 @@ export const Comments = (props: CommentsProps) => {
     const { comments } = props;
 
     return (
-        <View direction="row" gap={3} padding={4} borderColor="neutral-faded" borderRadius="medium">
+        <View direction="column" gap={3} padding={4} borderColor="neutral-faded" borderRadius="medium">
             {comments && comments.length > 0 ? (
                 comments.map((comment, index) => (
-                    <View.Item columns={12} key={index}>
                         <View direction='row' gap={3} align='center'>
-
-                            <Avatar initials={`${index}`} />
+                            <Avatar initials={`${index}`} src={comment.image?.fullPath}/>
                             <View.Item >
                                 <View
                                     backgroundColor="neutral-faded"
@@ -29,7 +27,6 @@ export const Comments = (props: CommentsProps) => {
                                 <Icon svg={comment.like ? IconLike : IconDisLike} size={5} />
                             </View.Item>
                         </View>
-                    </View.Item>
                 ))
             ) : (
                 <Text>No hay votos para este luchador.</Text>

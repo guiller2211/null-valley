@@ -8,6 +8,7 @@ export type CaseReducers = typeof slice.caseReducers;
 export type Context = LuchadorData & {
   actions: CaseReducerActions<CaseReducers, 'luchador'>;
   getLuchadores: () => Promise<LuchadorData[]>;
+  getCommets: () => Promise<CommentsData[]>;
   addComment: (luchadorId: string, comentario: CommentsData) => void;
   resetVotaciones: () => void;
 };
