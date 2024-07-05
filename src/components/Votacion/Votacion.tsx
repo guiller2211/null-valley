@@ -124,7 +124,8 @@ export const Votaciones = (props: VotacionesProps) => {
     return (
         <View direction='column' gap={5} >
 
-            <Text align='center' variant='featured-2' weight='bold'>Encuesta Null Valley</Text>
+            <Text align='center' variant='featured-1' weight='bold'>Encuesta Null Valley</Text>
+            <Text align='center' variant='featured-2' weight='bold'>Por Favor Seleccione un luchador</Text>
             {
                 isLoadingLuchadores
                     ?

@@ -29,7 +29,7 @@ export const Comments = (props: CommentsProps) => {
                         </View>
                 ))
             ) : (
-                <Text>No hay comentarios agregados </Text>
+                <Text>No hay comentarios agregados</Text>
             )}
         </View>
     )
