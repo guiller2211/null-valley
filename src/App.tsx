@@ -30,13 +30,11 @@ export function App() {
             const totalLikes = luchador.votes.filter(vote => vote.like).length;
             const totalDislikes = luchador.votes.filter(vote => !vote.like).length;
 
-            // Calcular el score según los criterios dados
             const score = totalLikes * 2 - totalDislikes;
 
             luchador.score = score;
             luchador.totalDislikes = totalDislikes;
 
-            // Determinar los ganadores según el score
             if (score > maxScore) {
                 maxScore = score;
                 currentWinners = [luchador];
@@ -44,7 +42,6 @@ export function App() {
                 currentWinners.push(luchador);
             }
         } else {
-            // Si no hay votos, asignar score y totales a 0
             luchador.score = 0;
             luchador.totalDislikes = 0;
         }
