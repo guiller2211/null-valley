@@ -2,7 +2,6 @@ import { View, Text, Card, Image, Button } from 'reshaped';
 import { ResultsProps } from './Results.types';
 import { Comments } from '../Comments/Comments';
 
-
 export const Results = (props: ResultsProps) => {
   const { winner, onReset, isLoading } = props;
 

@@ -2,7 +2,6 @@ import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { LuchadorData } from '../types/luchador';
 
-
 export const INITIAL_STATE: LuchadorData = {
   name: '',
   image: {

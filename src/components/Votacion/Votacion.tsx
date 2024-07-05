@@ -1,7 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Card, Text, View, Image, RadioGroup, Radio, Icon, TextArea, Tooltip, Button, Loader, FormControl } from 'reshaped';
 import { CommentsData, LuchadorData } from '../../types/luchador';
-import { getLuchadores } from '../../api/luchadores.data';
 import { IconLike } from '../../icon/IconLike';
 import { IconDisLike } from '../../icon/IconDisLike';
 import { Comments } from '../Comments/Comments';
@@ -11,7 +10,7 @@ import { useLuchador } from '../../context/LuchadoresContext';
 
 export const Votaciones = (props: VotacionesProps) => {
     const { total, luchadoresData } = props;
-    const { agregarComentario } = useLuchador();
+    const { addComment, getLuchadores } = useLuchador();
     const [luchadores, setLuchadores] = useState<LuchadorData[]>(luchadoresData);
     const [activeLuchador, setActiveLuchador] = useState<string | null>(null);
     const [like, setLike] = useState('');
@@ -19,18 +18,21 @@ export const Votaciones = (props: VotacionesProps) => {
     const [comment, setComment] = useState<string>('');
     const [votesCount, setVotesCount] = useState(0)
     const [isLoading, setIsloading] = useState(false);
+    const [isLoadingLuchadores, setIsloadingLuchadores] = useState(false);
     const [likeHasError, setLikeHasError] = useState(false);
     const [commentHasError, setCommentHasError] = useState(false);
 
-
     useEffect(() => {
         const fetchData = async () => {
+            setIsloadingLuchadores(true);
             try {
                 const fetchedLuchadores = await getLuchadores();
                 setLuchadores(fetchedLuchadores);
 
             } catch (error) {
                 console.error("Error obteniendo luchadores:", error);
+            }finally{
+                setIsloadingLuchadores(false)
             }
         };
 
@@ -53,8 +55,8 @@ export const Votaciones = (props: VotacionesProps) => {
             };
 
             try {
-                await agregarComentario(uidLuchador, voto);
-                await actualizarLuchadores();
+                await addComment(uidLuchador, voto);
+                await updateLuchadores();
             } catch (error) {
                 console.error('Error:', error);
             } finally {
@@ -66,7 +68,7 @@ export const Votaciones = (props: VotacionesProps) => {
         }
     };
 
-    const actualizarLuchadores = async () => {
+    const updateLuchadores = async () => {
         try {
             const updatedLuchadores = await getLuchadores();
             let totalVotes = 0;
@@ -105,7 +107,13 @@ export const Votaciones = (props: VotacionesProps) => {
     return (
         <View direction='column' gap={5}>
             <Text align='center' variant='featured-2' weight='bold'>Encuesta Null Valley</Text>
-            <form onSubmit={submitForm}>
+            {
+                isLoadingLuchadores 
+                ?
+                <Loader size='medium'/>
+                :
+                <>
+                 <form onSubmit={submitForm}>
                 <View direction='row' gap={5}>
                     {luchadores.map((luchador) => {
                         const luchadorName = luchador.name.replace(/\s+/g, '_');
@@ -178,12 +186,14 @@ export const Votaciones = (props: VotacionesProps) => {
                     <Button loading={isLoading} disabled={!activeLuchador} type='submit' size='xlarge' color='primary' fullWidth>Enviar Encuesta</Button>
                 </View>
             </form>
-
             {
                 votesCount === 9
                 &&
                 <Text variant='body-3' weight='bold'>Queda 1 voto para terminar</Text>
             }
+                </>
+            }
+           
         </View>
     );
 };

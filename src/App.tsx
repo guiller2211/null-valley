@@ -3,17 +3,17 @@ import { useState } from 'react';
 import { View, Reshaped, Container } from 'reshaped';
 import { Results } from './components/Results/Results';
 import { Votaciones } from './components/Votacion/Votacion';
-import { getLuchadores } from "./api/luchadores.data";
 import { LuchadorData } from "./types/luchador";
 import { useLuchador } from "./context/LuchadoresContext";
 
 export function App() {
   const [luchadores, setLuchadores] = useState<LuchadorData[]>([]);
-  const { resetVotaciones } = useLuchador();
+  const { resetVotaciones, getLuchadores } = useLuchador();
   const [showResults, setShowResults] = useState(false);
   const [winners, setWinners] = useState<LuchadorData[]>([]);
   const [isLoading, setIsloading] = useState(false);
 
+  
   const determinarGanador = (luchadores: LuchadorData[]) => {
     let maxScore = -Infinity;
     let currentWinners: LuchadorData[] = [];

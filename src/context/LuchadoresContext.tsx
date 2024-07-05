@@ -2,11 +2,12 @@ import { bindActionCreators } from '@reduxjs/toolkit';
 import { createContext, useReducer, useMemo, useContext } from 'react';
 
 import type { Dispatch } from 'redux';
-import { CommentsData } from '../types/luchador';
+import { CommentsData, LuchadorData } from '../types/luchador';
 import { arrayUnion, collection, doc, getDocs, updateDoc } from 'firebase/firestore';
-import { db } from '../services';
+import { db, storage } from '../services';
 import { Context, LuchadorProviderProps } from './LuchadoresContext.types';
 import { INITIAL_STATE, slice } from './LuchadoresContext.slice';
+import { getDownloadURL, ref } from 'firebase/storage';
 
 export const LuchadorContext = createContext<Context>({} as Context);
 
@@ -21,7 +22,24 @@ export const LuchadorProvider = (props: LuchadorProviderProps) => {
     const luchadorValue: Context = {
       ...state,
       actions,
-      agregarComentario: async (luchadorId: string, voto: CommentsData) => {
+      getLuchadores: async () =>{
+        const luchadoresSnapshot = await getDocs(collection(db, "luchador"));
+        const luchadoresData: LuchadorData[] = await Promise.all(luchadoresSnapshot.docs.map(async (doc) => {
+          const data = doc.data() as LuchadorData;
+          const imageUrl = await getDownloadURL(ref(storage, data.image.fullPath));
+      
+          return {
+            ...data,
+            id: doc.id,
+            image: {
+              ...data.image,
+              fullPath: imageUrl
+            }
+          };
+        }))
+        return luchadoresData;
+      },
+      addComment: async (luchadorId: string, voto: CommentsData) => {
         try {
           const luchadorRef = doc(db, "luchador", luchadorId);
           await updateDoc(luchadorRef, {
