@@ -11,31 +11,33 @@ import {
     Button,
     Loader,
     FormControl,
-    Actionable
+    Actionable,
+    TextField
 } from 'reshaped';
 import { CommentsData, LuchadorData } from '../../types/luchador';
 import { IconLike } from '../../icon/IconLike';
 import { IconDisLike } from '../../icon/IconDisLike';
 import { Comments } from '../Comments/Comments';
 import { VotacionesProps } from './Votacion.types';
-import { ofuscarPalabrasProhibidas } from '../../utils/validation-utils';
+import { ofuscarPalabrasProhibidas, validateNickName } from '../../utils/validation-utils';
 import { useLuchador } from '../../context/LuchadoresContext';
 
 export const Votaciones = (props: VotacionesProps) => {
     const { total, luchadoresData } = props;
-    const { addComment, getLuchadores, getCommets } = useLuchador();
+    const { addComment, getLuchadores } = useLuchador();
     const [luchadores, setLuchadores] = useState<LuchadorData[]>(luchadoresData);
-    const [comments, setComments] = useState<CommentsData[]>([]);
     const [activeLuchador, setActiveLuchador] = useState<string | null>(null);
+    const [nickName, setNickName] = useState('');
     const [like, setLike] = useState('');
     const [uidLuchador, setUidLuchador] = useState('');
     const [comment, setComment] = useState<string>('');
     const [votesCount, setVotesCount] = useState(0)
     const [isLoading, setIsloading] = useState(false);
     const [isLoadingLuchadores, setIsloadingLuchadores] = useState(false);
-    const [isLoadingComments, setIsloadingComments] = useState(false);
     const [likeHasError, setLikeHasError] = useState(false);
     const [commentHasError, setCommentHasError] = useState(false);
+    const [ninckNameHasError, setNickNameHasError] = useState(false);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -43,8 +45,6 @@ export const Votaciones = (props: VotacionesProps) => {
             try {
                 const fetchedLuchadores = await getLuchadores();
                 setLuchadores(fetchedLuchadores);
-                const fetchedComments = await getCommets();
-                setComments(fetchedComments);
             } catch (error) {
                 console.error("Error obteniendo luchadores:", error);
             } finally {
@@ -58,43 +58,56 @@ export const Votaciones = (props: VotacionesProps) => {
     const submitForm = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        if (like.trim() === "") {
-            setLikeHasError(true);
-        } else if (comment.trim() === "") {
-            setCommentHasError(true);
-        } else {
-            setIsloading(true);
-            setIsloadingComments(true);
-            const voto: CommentsData = {
-                comment: comment,
-                like: like === 'true'
-            };
+        const likeValid = like.trim() !== "";
+        const commentValid = comment.trim() !== "";
+        const nickNameError = validateNickName(nickName);
+        const nickNameValid = nickName.trim() !== "" && nickNameError;
 
-            try {
-                await addComment(uidLuchador, voto);
-                await updateComments();
-            } catch (error) {
-                console.error('Error:', error);
-            } finally {
-                setIsloading(false);
-                setIsloadingComments(false);
-                setLikeHasError(false);
-                setCommentHasError(false);
-                setActiveLuchador(null);
-            }
+        setLikeHasError(!likeValid);
+        setCommentHasError(!commentValid);
+        setNickNameHasError(!nickNameValid);
+        if (!nickNameValid) {
+            setError(nickName.trim() === "" ? 'Nickname debe ser minimo de 6 y maximo de 8' : 'Campo obligatorio');
+        } else {
+            setError('');
+        }
+        if (!likeValid || !commentValid || !nickNameValid) return;
+
+        setIsloading(true);
+        const voto: CommentsData = {
+            nickName: nickName,
+            comment: comment,
+            like: like === 'true'
+        };
+
+        try {
+            await addComment(uidLuchador, voto);
+            await actualizarLuchadores();
+        } catch (error) {
+            console.error('Error:', error);
+        } finally {
+            setIsloading(false);
+            resetForm();
         }
     };
 
-    const updateComments = async () => {
+    const resetForm = () => {
+        setLikeHasError(false);
+        setCommentHasError(false);
+        setNickNameHasError(false);
+        setActiveLuchador(null);
+    };
+    const actualizarLuchadores = async () => {
         try {
-            const updatedComments = await getCommets();
+            const updatedLuchadores = await getLuchadores();
             let totalVotes = 0;
 
-            totalVotes += updatedComments.length;
-
+            updatedLuchadores.forEach(luchador => {
+                totalVotes += luchador.votes!.length;
+            });
             setVotesCount(totalVotes)
-            totalVotes >= 10 && total && total(totalVotes);
-            setComments(updatedComments);
+            totalVotes >=3 && total && total(totalVotes);
+            setLuchadores(updatedLuchadores);
         } catch (error) {
             console.error("Error updating luchadores after vote:", error);
         }
@@ -120,7 +133,16 @@ export const Votaciones = (props: VotacionesProps) => {
 
         setComment(textoOfuscado);
     };
-
+    const handleChange = (e: string) => {
+        const value = e;
+        const validationError = validateNickName(value);
+        if (validationError) {
+            setNickName(value);
+        } else {
+            setNickName('');
+            setError('Nickname debe ser minimo de 6 y maximo de 8');
+        }
+    };
     return (
         <View direction='column' gap={5} >
 
@@ -161,16 +183,14 @@ export const Votaciones = (props: VotacionesProps) => {
                                                             <>
                                                                 {activeLuchador === luchador.id && (
                                                                     <>
-                                                                        <FormControl hasError={likeHasError}>
-                                                                            <RadioGroup
-                                                                                name={luchadorName + "_like"}
-                                                                                onChange={({ value }) => setLike(value)}>
-                                                                                <View gap={10} direction='row' justify={'center'}>
-                                                                                    <Radio value="true"><Icon svg={IconLike} size={8} /></Radio>
-                                                                                    <Radio value="false"><Icon svg={IconDisLike} size={8} /></Radio>
-                                                                                </View>
-                                                                            </RadioGroup>
-                                                                            <FormControl.Error>Campo obligatorio</FormControl.Error>
+                                                                        <FormControl hasError={ninckNameHasError}>
+                                                                            <FormControl.Label>Nick Name</FormControl.Label>
+                                                                            <TextField
+                                                                                name='nickName'
+                                                                                onChange={(e) => handleChange(e.value)}
+
+                                                                            />
+                                                                            <FormControl.Error>{error}</FormControl.Error>
                                                                         </FormControl>
 
                                                                         <FormControl hasError={commentHasError}>
@@ -185,6 +205,19 @@ export const Votaciones = (props: VotacionesProps) => {
                                                                             />
                                                                             <FormControl.Error>Campo obligatorio</FormControl.Error>
                                                                         </FormControl>
+                                                                        <FormControl hasError={likeHasError}>
+                                                                            <RadioGroup
+                                                                                name={luchadorName + "_like"}
+                                                                                onChange={({ value }) => setLike(value)}>
+                                                                                <View gap={10} direction='row' justify={'center'}>
+                                                                                    <Radio value="true"><Icon svg={IconLike} size={8} /></Radio>
+                                                                                    <Radio value="false"><Icon svg={IconDisLike} size={8} /></Radio>
+                                                                                </View>
+                                                                            </RadioGroup>
+                                                                            <FormControl.Error>Campo obligatorio</FormControl.Error>
+                                                                        </FormControl>
+                                                                        <Comments comments={luchador.votes} />
+
                                                                     </>
                                                                 )}
 
@@ -209,12 +242,6 @@ export const Votaciones = (props: VotacionesProps) => {
                             votesCount === 9
                             &&
                             <Text variant='body-3' weight='bold'>Queda 1 voto para terminar</Text>
-                        }
-                        {
-                            isLoadingComments ?
-                                <Loader />
-                                :
-                                <Comments comments={comments} />
                         }
 
                     </>

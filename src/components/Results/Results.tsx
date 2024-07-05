@@ -17,7 +17,6 @@ export const Results = (props: ResultsProps) => {
         {
           winner.map((_w, index) => (
             <View gap={5} key={index} borderColor='primary' borderRadius='medium'>
-
               <Actionable key={index}>
                 <View direction='column' gap={5} width={100} padding={5}>
                   <View direction="row" gap={4} justify={{ s: 'center', l: 'start' }}>
@@ -33,7 +32,8 @@ export const Results = (props: ResultsProps) => {
                   </View>
                   <Comments comments={_w.votes} />
 
-                  <Text variant='featured-2' weight='bold'>Con la cantidad de {_w.votes?.length} positivos</Text>
+                  <Text variant='featured-3' weight='bold'>Con la cantidad de {_w.score} puntos positivos</Text>
+                  <Text variant='featured-3' weight='bold'>Con la cantidad de {_w.totalDislikes} puntos negativos</Text>
                 </View>
 
               </Actionable>

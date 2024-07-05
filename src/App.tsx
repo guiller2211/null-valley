@@ -14,7 +14,7 @@ export function App() {
 
 
   const showResult = async (total: number) => {
-    if (total > 9) {
+    if (total >= 3) {
       await getLuchadores()
         .then(luchadores => determinarGanador(luchadores))
         .catch(error => console.error("Error obteniendo luchadores:", error));
@@ -26,28 +26,34 @@ export function App() {
     let currentWinners: LuchadorData[] = [];
 
     luchadores.forEach(luchador => {
-      if (luchador.votes && luchador.votes.length > 0) {
-        const totalLikes = luchador.votes.filter(vote => vote.like).length;
-        const totalDislikes = luchador.votes.length - totalLikes;
-        const score = totalLikes - totalDislikes;
+        if (luchador.votes && luchador.votes.length > 0) {
+            const totalLikes = luchador.votes.filter(vote => vote.like).length;
+            const totalDislikes = luchador.votes.filter(vote => !vote.like).length;
 
-        if (score > maxScore) {
-          maxScore = score;
-          currentWinners = [luchador];
-        } else if (score === maxScore) {
-          currentWinners.push(luchador);
+            // Calcular el score según los criterios dados
+            const score = totalLikes * 2 - totalDislikes;
+
+            luchador.score = score;
+            luchador.totalDislikes = totalDislikes;
+
+            // Determinar los ganadores según el score
+            if (score > maxScore) {
+                maxScore = score;
+                currentWinners = [luchador];
+            } else if (score === maxScore) {
+                currentWinners.push(luchador);
+            }
+        } else {
+            // Si no hay votos, asignar score y totales a 0
+            luchador.score = 0;
+            luchador.totalDislikes = 0;
         }
-      }
     });
 
-    if (currentWinners.length === 1) {
-      setWinners([currentWinners[0]]);
-    } else {
-      setWinners(currentWinners);
-    }
-
+    setWinners(currentWinners);
     setShowResults(true);
-  };
+};
+
 
   const resetEncuesta = async () => {
     setIsloading(true);
