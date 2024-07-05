@@ -106,7 +106,7 @@ export const Votaciones = (props: VotacionesProps) => {
                 totalVotes += luchador.votes!.length;
             });
             setVotesCount(totalVotes)
-            totalVotes >=3 && total && total(totalVotes);
+            totalVotes >=10 && total && total(totalVotes);
             setLuchadores(updatedLuchadores);
         } catch (error) {
             console.error("Error updating luchadores after vote:", error);

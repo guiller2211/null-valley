@@ -14,7 +14,7 @@ export function App() {
 
 
   const showResult = async (total: number) => {
-    if (total >= 3) {
+    if (total >= 10) {
       await getLuchadores()
         .then(luchadores => determinarGanador(luchadores))
         .catch(error => console.error("Error obteniendo luchadores:", error));
