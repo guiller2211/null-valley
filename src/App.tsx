@@ -5,10 +5,9 @@ import { Results } from './components/Results/Results';
 import { Votaciones } from './components/Votacion/Votacion'; 
 import { Vote } from './types/votos'
 
-function App() {
+export function App() {
   const [votes, setVotes] = useState<Vote[]>([]);
   const [showResults, setShowResults] = useState(false);
-
  
 
   const resetVotes = () => {
@@ -32,5 +31,3 @@ function App() {
     </Reshaped>
   );
 }
-
-export default App;
