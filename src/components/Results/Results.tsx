@@ -1,48 +1,47 @@
-import React from 'react';
+import { View, Text, Card, Image, Button } from 'reshaped';
+import { ResultsProps } from './Results.types';
+import { Comments } from '../Comments/Comments';
 
-interface Vote {
-  nickname: string;
-  comment: string;
-  rating: number;
-}
 
-export const Results: React.FC<{ votes: Vote[], resetVotes: () => void }> = ({ votes, resetVotes }) => {
-  const davidVotes = votes.filter(vote => vote.nickname === 'David');
-  const jonathanVotes = votes.filter(vote => vote.nickname === 'Jonathan');
-  
-  const davidScore = davidVotes.reduce((acc, vote) => acc + vote.rating, 0);
-  const jonathanScore = jonathanVotes.reduce((acc, vote) => acc + vote.rating, 0);
-
-  const winner = davidScore > jonathanScore ? 'David Larousse' : jonathanScore > davidScore ? 'Jonathan Lowrie' : 'Empate';
+export const Results = (props: ResultsProps) => {
+  const { winner, onReset, isLoading } = props;
 
   return (
-    <div>
-      <h1>Resultados</h1>
-      {winner !== 'Empate' ? (
-        <div>
-          <h2>El ganador es {winner}</h2>
-        </div>
-      ) : (
-        <h2>Es un empate</h2>
-      )}
-      <button onClick={resetVotes}>Resetear Encuesta</button>
-      <div>
-        <h2>Comentarios de David Larousse</h2>
-        <ul>
-          {davidVotes.map((vote, index) => (
-            <li key={index}>{vote.comment}</li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <h2>Comentarios de Jonathan Lowrie</h2>
-        <ul>
-          {jonathanVotes.map((vote, index) => (
-            <li key={index}>{vote.comment}</li>
-          ))}
-        </ul>
-      </div>
-    </div>
+    <View direction='column' gap={5}>
+      <Text align='center' variant='featured-2' weight='bold'>Resultados</Text>
+
+      <Text align='center' variant='featured-2' weight='bold'>
+        {winner.length > 1 ? 'Empate' : `Ganador ${winner[0].name}`}
+      </Text>
+
+      <View direction='row' gap={5}>
+        {
+          winner.map((_w, index) => (
+            <Card key={index}>
+              <View direction='column' gap={5} width={100}>
+                <View direction="row" gap={4} justify={{ s: 'center', l: 'start' }}>
+                  <Image src={_w.image.fullPath} />
+                  <View direction="column" gap={4}>
+                    <Text variant="featured-1" weight="bold">
+                      {_w.name}
+                    </Text>
+                    <Text variant="featured-3">
+                      {_w.description || "Default Description"}
+                    </Text>
+                  </View>
+                </View>
+                <Comments comments={_w.votes} />
+
+              </View>
+            </Card>
+          ))
+        }
+      </View>
+
+      <Button loading={isLoading} onClick={onReset} size='xlarge' color='primary' fullWidth>
+        Reiniciar encuesta
+      </Button>
+    </View>
   );
 };
 

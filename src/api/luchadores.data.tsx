@@ -1,4 +1,3 @@
-// luchador.data.tsx
 import { collection, getDocs } from "firebase/firestore";
 import { db, storage } from '../services';
 import { getDownloadURL, ref } from "firebase/storage";
@@ -22,3 +21,7 @@ export async function getLuchadores(): Promise<LuchadorData[]> {
 
   return luchadoresData;
 }
+
+
+
+

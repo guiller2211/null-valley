@@ -1,3 +1,5 @@
+import { FormEvent } from "react";
+
 export interface Vote {
     nickname: string;
     comment: string;
@@ -6,5 +8,5 @@ export interface Vote {
 
 export type VotosData = {
     votes: Vote[];
-    addVote: (vote: Vote) => void;
+    addVote: (vote: FormEvent) => void;
 };
